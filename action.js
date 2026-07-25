@@ -11,6 +11,51 @@ const formatters = {
   shell: (data, opts) => txtFormatter(data, { ...opts, colors: true}),
 }
 
+const KNOWN_FIELDS = new Set(['name', 'alum', 'honorary_human'])
+
+function validateSchema(data) {
+  const errors = []
+
+  if (!data || typeof data !== 'object') {
+    errors.push("root must be a YAML mapping")
+    return errors
+  }
+
+  if (!Array.isArray(data.humans)) {
+    errors.push("'humans' must be a list")
+    return errors
+  }
+
+  data.humans.forEach((human, i) => {
+    const prefix = `humans[${i}]`
+
+    if (typeof human !== 'object' || human === null) {
+      errors.push(`${prefix} must be a mapping`)
+      return
+    }
+
+    if (typeof human.name !== 'string' || human.name.trim() === '') {
+      errors.push(`${prefix}.name must be a non-empty string`)
+    }
+
+    if ('alum' in human && typeof human.alum !== 'boolean') {
+      errors.push(`${prefix}.alum must be a boolean`)
+    }
+
+    if ('honorary_human' in human && typeof human.honorary_human !== 'boolean') {
+      errors.push(`${prefix}.honorary_human must be a boolean`)
+    }
+
+    for (const key of Object.keys(human)) {
+      if (!KNOWN_FIELDS.has(key)) {
+        errors.push(`${prefix} has unknown field '${key}'`)
+      }
+    }
+  })
+
+  return errors
+}
+
 main()
 
 function main() {
@@ -24,6 +69,15 @@ function main() {
   }
 
   const data = yaml.parse(fs.readFileSync(__dirname + "/humans.txt.yaml", {encoding: "utf8"}))
+
+  const errors = validateSchema(data)
+  if (errors.length > 0) {
+    for (const err of errors) {
+      console.error(`Schema error: ${err}`)
+    }
+    process.exitCode = 1
+    return
+  }
 
   data.humans = data.humans.sort((a,b) => a.name > b.name ? 1 : -1)
 

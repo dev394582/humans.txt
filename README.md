@@ -22,3 +22,22 @@ Options: `txt`, `json`, `shell`
 ## humans.txt
 
 This automatically deploys to https://actions.github.io/humans.txt.
+
+## Schema
+
+Each entry in `humans.txt.yaml` must conform to the following schema. The file is validated on every run; invalid entries cause a non-zero exit and a descriptive error message.
+
+```yaml
+humans:
+  - name: "Full Name"          # required – non-empty string
+    alum: true                 # optional boolean – true if the person no longer works on Actions
+    honorary_human: true       # optional boolean – reserved for special non-human contributors
+```
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `name` | string | ✅ | The person's full name |
+| `alum` | boolean | ❌ | `true` if the person is an alumnus |
+| `honorary_human` | boolean | ❌ | `true` for honorary members |
+
+Unknown fields will cause a validation error.
